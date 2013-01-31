@@ -7,34 +7,35 @@ module ISO8583::MKB
         @gateway.run
       else
         @loop_is_mine = true
-        Thread.new(config, &method(:thread))
+        @ready = Queue.new
+        @thread = Thread.new(config, &method(:thread))
+        e = @ready.pop
+        @ready = nil
+
+        raise e unless e.nil?
       end
     end
 
     def stop
-      mutex = Mutex.new
-      cvar = ConditionVariable.new
-
       EventMachine.schedule do
         @gateway.stop
         EventMachine.stop_event_loop if @loop_is_mine
-        mutex.synchronize { cvar.signal }
       end
 
-      mutex.synchronize { cvar.wait(mutex) }
+      if @loop_is_mine
+        @thread.join
+        @thread = nil
+      end
     end
 
     def execute(request)
-      mutex = Mutex.new
-      cvar = ConditionVariable.new
+      queue = Queue.new
 
       EventMachine.schedule do
-        request.submit(@gateway) do
-          mutex.synchronize { cvar.signal }
-        end
+        request.submit(@gateway) { queue.push nil }
       end
 
-      mutex.synchronize { cvar.wait(mutex) }
+      queue.pop
     end
 
     private
@@ -43,14 +44,29 @@ module ISO8583::MKB
       begin
         @gateway = Gateway.new config
 
+        @ready.push nil
+
+        EventMachine.epoll
         EventMachine.run do
+          EventMachine.error_handler do
+            Logging.logger.error "Uncaught exception in EventMachine:"
+            Logging.logger.error e.to_s
+            e.backtrace.each do |line|
+              Logging.logger.error line
+            end
+          end
+
           @gateway.run
         end
 
       rescue => e
-        Logging.logger.error e
+        Logging.logger.error e.to_s
         e.backtrace.each do |line|
           Logging.logger.error line
+        end
+
+        if !@ready.nil?
+          @ready.push e
         end
       end
     end
