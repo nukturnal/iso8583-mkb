@@ -7,6 +7,7 @@ module ISO8583::MKB
       @dhi_host = uri.host
       @dhi_port = uri.port
       @dhi_open = false
+      @reopen_timer = nil
 
       @deferred = []
       Logging.logger.info "Gateway started"
@@ -16,6 +17,23 @@ module ISO8583::MKB
       EventMachine.run do
         reopen_dhi
       end
+    end
+
+    def stop
+      if !@reopen_timer.nil?
+        EventMachine.cancel_timer @reopen_timer
+        @reopen_timer = nil
+      end
+
+      if !@dhi.nil?
+        @dhi_open = false
+        @dhi.closed = ->() {}
+
+        @dhi.close_connection
+        @dhi = nil
+      end
+
+      @deferred.clear
     end
 
     def new_transaction
@@ -48,10 +66,12 @@ module ISO8583::MKB
       @dhi_open = false
       @dhi = nil
 
-      EventMachine.add_timer 15, method(:reopen_dhi)
+      @reopen_timer = EventMachine.add_timer 15, method(:reopen_dhi)
     end
 
     def reopen_dhi
+      @reopen_timer = nil
+
       Logging.logger.debug "Opening connection to DHI"
 
       @dhi = EventMachine.connect @dhi_host, @dhi_port, ISO8583Connection, self

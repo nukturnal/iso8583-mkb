@@ -1,21 +1,40 @@
 module ISO8583::MKB
   class SynchronousGateway
     def initialize(config)
-      @mutex = Mutex.new
-      @cvar = ConditionVariable.new
-      Thread.new(config, &method(:thread))
+      if EventMachine.reactor_running?
+        @loop_is_mine = false
+        @gateway = Gateway.new config
+        @gateway.run
+      else
+        @loop_is_mine = true
+        Thread.new(config, &method(:thread))
+      end
+    end
 
-      puts "okay"
+    def stop
+      mutex = Mutex.new
+      cvar = ConditionVariable.new
+
+      EventMachine.schedule do
+        @gateway.stop
+        EventMachine.stop_event_loop if @loop_is_mine
+        mutex.synchronize { cvar.signal }
+      end
+
+      mutex.synchronize { cvar.wait(mutex) }
     end
 
     def execute(request)
+      mutex = Mutex.new
+      cvar = ConditionVariable.new
+
       EventMachine.schedule do
         request.submit(@gateway) do
-          @mutex.synchronize { @cvar.signal }
+          mutex.synchronize { cvar.signal }
         end
       end
 
-      @mutex.synchronize { @cvar.wait(@mutex) }
+      mutex.synchronize { cvar.wait(mutex) }
     end
 
     private
