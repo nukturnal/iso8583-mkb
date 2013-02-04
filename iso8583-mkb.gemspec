@@ -4,9 +4,9 @@ require File.expand_path('../lib/iso8583-mkb/version', __FILE__)
 Gem::Specification.new do |gem|
   gem.authors       = ["Sergey Gridasov"]
   gem.email         = ["grindars@gmail.com"]
-  gem.description   = %q{TODO: Write a gem description}
-  gem.summary       = %q{TODO: Write a gem summary}
-  gem.homepage      = ""
+  gem.description   = %q{ISO8583 implementation for Credit Bank of Moscow}
+  gem.summary       = %q{ISO8583 implementation for MKB}
+  gem.homepage      = "https://github.com/smartkiosk/iso8583-mkb"
 
   gem.files         = `git ls-files`.split($\)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
