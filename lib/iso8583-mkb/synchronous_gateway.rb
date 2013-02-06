@@ -32,10 +32,24 @@ module ISO8583::MKB
       queue = Queue.new
 
       EventMachine.schedule do
-        request.submit(@gateway) { queue.push nil }
+        request.submit { queue.push nil }
       end
 
       queue.pop
+    end
+
+    def transaction(&block)
+      queue = Queue.new
+
+      EventMachine.schedule { queue.push @gateway.new_transaction }
+
+      transaction = queue.pop
+
+      begin
+        yield transaction
+      ensure
+        EventMachine.schedule { transaction.complete }
+      end
     end
 
     private

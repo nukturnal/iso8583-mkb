@@ -149,8 +149,6 @@ module ISO8583::MKB
     private
 
     def send_ping
-      Logging.logger.debug "Ping"
-
       @ping_timer = nil
 
       transaction = @gateway.new_transaction
@@ -171,8 +169,6 @@ module ISO8583::MKB
 
           close_connection_after_writing
         else
-          Logging.logger.debug "Pong"
-
           @ping_timer = EventMachine.add_timer(60, method(:send_ping))
         end
       end

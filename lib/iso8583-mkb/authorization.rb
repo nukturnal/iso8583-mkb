@@ -39,23 +39,17 @@ module ISO8583::MKB
     build_class
 
     def reverse
-      reversal = Reversal.new
+      reversal = Reversal.new(@transaction)
 
       [
         :pan, :processing_code, :amount, :expiry, :merchant_type,
         :acquirer_country, :entry_mode, :condition_code, :acquirer,
-        :currency
+        :currency, :additional , :terminal_id, :acceptor_id, :acceptor_name
       ].each do |key|
         reversal.send :"#{key}=", instance_variable_get(:"@#{key}")
       end
 
-      reversal.auth_id = @auth_id
       reversal.response_code = @status
-      reversal.original_data = sprintf("%04d%06d%10s%011d%011d",
-                                       @request.request.mti,
-                                       @transaction.trace,
-                                       @request.request["Transmission Date and Time"].strftime("%m%d%H%M%S"),
-                                       @acquirer, @acquirer).to_i
 
       reversal
     end

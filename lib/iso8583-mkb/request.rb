@@ -19,12 +19,13 @@ module ISO8583::MKB
     attr_accessor :retries
     attr_accessor :timeout
 
-    def initialize
+    def initialize(transaction)
       @retries = 4
       @timeout = 60
       @retry_with = nil
       @complete = nil
       @request = nil
+      @transaction = transaction
     end
 
     def success?
@@ -35,9 +36,7 @@ module ISO8583::MKB
       Errors.error @status
     end
 
-    def submit(gateway, &complete)
-      @transaction = gateway.new_transaction
-
+    def submit(&complete)
       translated_fields = {}
 
       self.class.const_get(:MANDATORY).each do |key, iso8583_name|
@@ -112,7 +111,6 @@ module ISO8583::MKB
 
     def complete_request(status)
       @status = status
-      @transaction.complete
 
       complete, @complete = @complete, nil
       complete.call self

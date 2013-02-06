@@ -14,10 +14,7 @@ module ISO8583::MKB
       "condition_code"   => "Point of Service Condition Code",
       "acquirer"         => "Acquiring Institution ID code",
       "currency"         => "Currency Code, Transaction",
-      "auth_id"          => "Authorization Identification Response",
-      "response_code"    => "Response Code",
-      "reason"           => "Message Reason Code",
-      "original_data"    => "Original Data Elements"
+      "response_code"    => "Response Code"
     }
 
     OPTIONAL = {

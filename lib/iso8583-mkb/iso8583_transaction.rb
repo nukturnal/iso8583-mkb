@@ -23,7 +23,7 @@ module ISO8583::MKB
 
     def request(&block)
       message = MKBMessage.new
-      message["Transmission Date and Time"] = Time.now.utc
+      message["Transmission Date and Time"] = @started_at
       message["Systems Trace Audit Number"] = @trace
       message["Time, Local Transaction"] = @started_at
       message["Date, Local Transaction"] = @started_at
