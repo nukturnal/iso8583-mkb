@@ -28,7 +28,9 @@ module ISO8583::MKB
       "acceptor_id"      => "Card Acceptor ID Code",
       "acceptor_name"    => "Card Acceptor Name/Location",
 
-      "additional" => "Additional Information"
+      "additional"       => "Additional Information",
+      "security_control" => "Security Related Control Information",
+      "pin_block"        => "Personal Identification Number Data"
     }
 
     RESPONSE = {
